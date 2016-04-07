@@ -15,7 +15,7 @@ public class ReloadFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         System.out.println("ReloadFilter.doFilter");
         try {
-            Main.interpreter.reload();
+            Main.reloader.reload();
         } catch (Exception e) {
             e.printStackTrace();
         }

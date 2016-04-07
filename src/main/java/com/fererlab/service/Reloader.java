@@ -1,6 +1,6 @@
 package com.fererlab.service;
 
-public interface Interpreter {
+public interface Reloader {
 
     void reload() throws Exception;
 

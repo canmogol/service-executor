@@ -2,8 +2,10 @@ package com.fererlab;
 
 import com.fererlab.filter.ReloadFilter;
 import com.fererlab.restful.RestfulApplication;
-import com.fererlab.service.Interpreter;
+import com.fererlab.service.JavascriptService;
+import com.fererlab.service.Reloader;
 import com.fererlab.service.Service;
+import com.fererlab.service.ServiceProxy;
 import io.undertow.Undertow;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -14,6 +16,9 @@ import org.jruby.embed.ScriptingContainer;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 import javax.servlet.DispatcherType;
 import java.net.URL;
 import java.nio.file.Files;
@@ -29,6 +34,7 @@ public class Main {
      * GamApp logger
      */
     private static Logger logger = Logger.getLogger(Main.class.getName());
+    public static Service service;
 
     /**
      * undertow web server
@@ -40,16 +46,32 @@ public class Main {
      */
     private Thread webServerThread;
 
+
+    /**
+     * Service object reloader
+     */
+    public static Reloader reloader;
+
     /**
      * Python pythonInterpreter
      */
     private PythonInterpreter pythonInterpreter = null;
+
+    /**
+     * Ruby Interpreter
+     */
     private ScriptingContainer rubyInterpreter = null;
-    public static Interpreter interpreter;
+
+    /**
+     * Javascript Interpreter
+     */
+    private ScriptEngine javascriptInterpreter;
+
 
     public static void main(String[] args) throws Exception {
-        //args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "py"};
-        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "rb"};
+//        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "py"};
+//        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "rb"};
+        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "js"};
         String filePath = "file://" + args[0] + args[1] + "." + args[2];
         String content = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
                 .stream()
@@ -57,18 +79,19 @@ public class Main {
                 .collect(Collectors.joining("\n"));
 
         Main main = new Main();
-//        Service service = main.createPythonService(content, args[1], filePath);
-        Service service = main.createRubyService(content, args[1], filePath);
-        main.startServer(service);
+//      main.createPythonService(content, args[1], filePath);
+//        main.createRubyService(content, args[1], filePath);
+        main.createJavascriptService(content, args[1], filePath);
+        main.startServer();
     }
 
-    private void startServer(Service service) {
+    private void startServer() {
         if (webServerThread == null) {
             logger.info("starting web server");
             webServerThread = new Thread() {
                 @Override
                 public void run() {
-                    restartServer(service);
+                    restartServer();
                 }
             };
             webServerThread.start();
@@ -77,7 +100,7 @@ public class Main {
         }
     }
 
-    private void restartServer(Service service) {
+    private void restartServer() {
         // create server
         long time = System.currentTimeMillis();
         server = new UndertowJaxrsServer();
@@ -92,18 +115,10 @@ public class Main {
         // start server
         time = System.currentTimeMillis();
         RestfulApplication restfulApplication = new RestfulApplication() {
-
-            @Override
-            public Set<Object> getSingletons() {
-                Set<Object> singletons = new HashSet<>();
-                singletons.add(service);
-                return singletons;
-            }
-
             @Override
             public Set<Class<?>> getClasses() {
                 Set<Class<?>> classes = new HashSet<>();
-//                classes.add(service.getClass());
+                classes.add(ServiceProxy.class);
                 return classes;
             }
         };
@@ -124,24 +139,46 @@ public class Main {
         logger.info("server deployed: " + (System.currentTimeMillis() - time) + " milli seconds");
     }
 
-    private Service createRubyService(String content, String requestServiceName, String filePath) {
+    private void createJavascriptService(String content, String requestServiceName, String filePath) {
+        try {
+            javascriptInterpreter = getJavascriptInterpreter();
+            reloader = () -> {
+                String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
+                        .stream()
+                        .map(i -> i)
+                        .collect(Collectors.joining("\n"));
+                javascriptInterpreter.eval(newContent);
+                Invocable invocable = (Invocable) javascriptInterpreter;
+                Object instance = invocable.invokeFunction("instance");
+                service = new JavascriptService(instance);
+            };
+            javascriptInterpreter.eval(content);
+            Invocable invocable = (Invocable) javascriptInterpreter;
+            Object instance = invocable.invokeFunction("instance");
+            service = new JavascriptService(instance);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createRubyService(String content, String requestServiceName, String filePath) {
         rubyInterpreter = getRubyInterpreter();
-        interpreter = () -> {
+        reloader = () -> {
             String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
                     .stream()
                     .map(i -> i)
                     .collect(Collectors.joining("\n"));
             Object rubyObject = rubyInterpreter.runScriptlet(newContent);
-            Service service = (Service) rubyObject;
+            service = (Service) rubyObject;
         };
         Object rubyObject = rubyInterpreter.runScriptlet(content);
-        Service service = (Service) rubyObject;
-        return service;
+        service = (Service) rubyObject;
     }
 
-    private Service createPythonService(String content, String requestServiceName, String filePath) {
+    private void createPythonService(String content, String requestServiceName, String filePath) {
         pythonInterpreter = getPythonInterpreter();
-        interpreter = () -> {
+        reloader = () -> {
             String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
                     .stream()
                     .map(i -> i)
@@ -149,13 +186,12 @@ public class Main {
             pythonInterpreter.exec(newContent);
             PyObject pyServiceObject = pythonInterpreter.get(requestServiceName);
             PyObject serviceObject = pyServiceObject.__call__();
-            Service service = (Service) serviceObject.__tojava__(Service.class);
+            service = (Service) serviceObject.__tojava__(Service.class);
         };
         pythonInterpreter.exec(content);
         PyObject pyServiceObject = pythonInterpreter.get(requestServiceName);
         PyObject serviceObject = pyServiceObject.__call__();
-        Service service = (Service) serviceObject.__tojava__(Service.class);
-        return service;
+        service = (Service) serviceObject.__tojava__(Service.class);
     }
 
     public PythonInterpreter getPythonInterpreter() {
@@ -172,8 +208,12 @@ public class Main {
         return rubyInterpreter;
     }
 
-
-
+    public ScriptEngine getJavascriptInterpreter() {
+        if (javascriptInterpreter == null) {
+            javascriptInterpreter = new ScriptEngineManager().getEngineByName("nashorn");
+        }
+        return javascriptInterpreter;
+    }
 
 
 /*
@@ -247,7 +287,7 @@ public class Main {
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
-            Service plugin = (Service) groovyObj;
+            plugin = (Service) groovyObj;
 
             Object[] parametersArray = null;
             Method callMethod = null;
@@ -318,7 +358,7 @@ public class Main {
             Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
             String content = scanner.next();
             Object greeter = container.runScriptlet(content);
-            Service plugin = (Service) greeter;
+            plugin = (Service) greeter;
 
             List<IRubyObject> paramList = new ArrayList<>();
             if (requestParameters.size() > 0) {
@@ -352,7 +392,7 @@ public class Main {
         Object[] parametersArray = null;
         Method callMethod = null;
         Class<? extends Service> pluginClass = Class.forName(requestServiceName).asSubclass(Service.class);
-        Service plugin = pluginClass.newInstance();
+        plugin = pluginClass.newInstance();
         for (Method method : pluginClass.getMethods()) {
             if (method.getName().equals(requestMethodName)
                     && method.getParameterCount() == requestParameters.size()) {
@@ -417,7 +457,7 @@ public class Main {
         Object[] parametersArray = null;
         Method callMethod = null;
         Class<? extends Service> pluginClass = Class.forName(requestServiceName).asSubclass(Service.class);
-        Service plugin = pluginClass.newInstance();
+        plugin = pluginClass.newInstance();
         for (Method method : pluginClass.getMethods()) {
             if (method.getName().equals(requestMethodName)
                     && method.getParameterCount() == requestParameters.size()) {
