@@ -2,7 +2,6 @@ package com.fererlab.service;
 
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,7 +13,7 @@ public class JavascriptService implements Service {
     }
 
     @Override
-    public Object handle(HashMap<String, String> event) {
+    public Object handle(Map<String, Object> event) {
         Object object = ((ScriptObjectMirror) instance).callMember("handle", event);
         if (object instanceof ScriptObjectMirror) {
             object = convert((ScriptObjectMirror) object);

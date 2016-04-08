@@ -4,7 +4,7 @@ function Authentication() {
     this.handle = function (event) {
         System.out.println('Javascript Object ' + this);
         System.out.println('Javascript Event ' + event);
-        var response = {logged: true, 'inner': {'groups': ['admin', 'user']}};
+        var response = {logged: true, 'groups': ['admin', 'user']};
         return response;
     };
 }

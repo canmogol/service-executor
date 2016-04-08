@@ -34,6 +34,10 @@ public class Main {
      * GamApp logger
      */
     private static Logger logger = Logger.getLogger(Main.class.getName());
+
+    /**
+     * Current Service instance
+     */
     public static Service service;
 
     /**
@@ -79,7 +83,7 @@ public class Main {
                 .collect(Collectors.joining("\n"));
 
         Main main = new Main();
-//      main.createPythonService(content, args[1], filePath);
+//        main.createPythonService(content, args[1], filePath);
 //        main.createRubyService(content, args[1], filePath);
         main.createJavascriptService(content, args[1], filePath);
         main.startServer();
