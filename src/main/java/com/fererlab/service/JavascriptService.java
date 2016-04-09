@@ -1,5 +1,6 @@
 package com.fererlab.service;
 
+import com.fererlab.event.Event;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.util.Map;
@@ -13,7 +14,7 @@ public class JavascriptService implements Service {
     }
 
     @Override
-    public Object handle(Map<String, Object> event) {
+    public Object handle(Event event) {
         Object object = ((ScriptObjectMirror) instance).callMember("handle", event);
         if (object instanceof ScriptObjectMirror) {
             object = convert((ScriptObjectMirror) object);

@@ -3,13 +3,14 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.fererlab</groupId>
     <artifactId>service-executor</artifactId>
+
     <version>0.0.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <version.undertow>1.3.20.Final</version.undertow>
     </properties>
 
     <build>
@@ -44,13 +45,19 @@
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
-            <version>1.3.17.Final</version>
+            <version>${version.undertow}</version>
         </dependency>
         <!-- undertow servlet -->
         <dependency>
             <groupId>io.undertow</groupId>
             <artifactId>undertow-servlet</artifactId>
-            <version>1.3.17.Final</version>
+            <version>${version.undertow}</version>
+        </dependency>
+        <!-- undertow websocket -->
+        <dependency>
+            <groupId>io.undertow</groupId>
+            <artifactId>undertow-websockets-jsr</artifactId>
+            <version>${version.undertow}</version>
         </dependency>
         <!-- RESTEasy Undertow Integration -->
         <dependency>
@@ -58,6 +65,7 @@
             <artifactId>resteasy-undertow</artifactId>
             <version>3.0.14.Final</version>
         </dependency>
+        <!-- json library -->
         <dependency>
             <groupId>com.owlike</groupId>
             <artifactId>genson</artifactId>
@@ -86,5 +94,6 @@
         </dependency>
 
     </dependencies>
+
 
 </project>

@@ -2,10 +2,7 @@ package com.fererlab;
 
 import com.fererlab.filter.ReloadFilter;
 import com.fererlab.restful.RestfulApplication;
-import com.fererlab.service.JavascriptService;
-import com.fererlab.service.Reloader;
-import com.fererlab.service.Service;
-import com.fererlab.service.ServiceProxy;
+import com.fererlab.service.*;
 import io.undertow.Undertow;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -70,7 +67,6 @@ public class Main {
      * Javascript Interpreter
      */
     private ScriptEngine javascriptInterpreter;
-
 
     public static void main(String[] args) throws Exception {
 //        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "py"};

@@ -1,13 +1,12 @@
 package com.fererlab.service;
 
 import com.fererlab.Main;
-
-import java.util.Map;
+import com.fererlab.event.Event;
 
 public class ServiceProxy implements Service {
 
     @Override
-    public Object handle(Map<String, Object> event) {
+    public Object handle(Event event) {
         return Main.service.handle(event);
     }
 

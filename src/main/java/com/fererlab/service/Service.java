@@ -1,19 +1,20 @@
 package com.fererlab.service;
 
 
+import com.fererlab.event.Event;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import java.util.Map;
 
-@Path("/service")
+@Path("/api")
 @Produces({"application/json"})
 @Consumes({"*/*"})
 public interface Service {
 
     @POST
     @Path("/handle/")
-    Object handle(Map<String, Object> event);
+    Object handle(Event event);
 
 }
