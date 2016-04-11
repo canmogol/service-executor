@@ -1,13 +1,14 @@
 package com.fererlab.event;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.HashMap;
 import java.util.Map;
 
 @XmlRootElement
 public class Event {
 
-    private Head head;
-    private Map<String, Object> body;
+    private Head head = new Head();
+    private Map<String, Object> body = new HashMap<>();
 
     public Head getHead() {
         return head;

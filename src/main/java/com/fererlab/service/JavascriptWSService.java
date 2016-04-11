@@ -6,20 +6,20 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class JavascriptService implements Service {
+public class JavascriptWSService implements ProxyWSService {
     private final Object instance;
 
-    public JavascriptService(Object instance) {
+    public JavascriptWSService(Object instance) {
         this.instance = instance;
     }
 
     @Override
-    public Object handle(Event event) {
+    public void handle(Event event) {
         Object object = ((ScriptObjectMirror) instance).callMember("handle", event);
         if (object instanceof ScriptObjectMirror) {
             object = convert((ScriptObjectMirror) object);
         }
-        return object;
+//        return object;
     }
 
     private static Map<String, Object> convert(ScriptObjectMirror scriptObjectMirror) {
@@ -39,4 +39,10 @@ public class JavascriptService implements Service {
         }
         return map;
     }
+
+    @Override
+    public Object execute(String methodName, Object param) {
+        return ((ScriptObjectMirror) instance).callMember(methodName, param);
+    }
+
 }

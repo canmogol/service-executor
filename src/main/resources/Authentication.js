@@ -1,6 +1,7 @@
 var System = Java.type('java.lang.System');
 
 function Authentication() {
+
     this.handle = function (event) {
         System.out.println('Javascript Object ' + this);
         System.out.println('Javascript Event ' + event);
@@ -16,8 +17,15 @@ function Authentication() {
         System.out.println('Javascript hc>>> ' + event.head.createdAt);
         System.out.println('Javascript b>>> ' + event.body);
         var response = {logged: true, 'groups': ['admin', 'user']};
-        return response;
+        //return response;
     };
+
+    this.sayHi = function (request) {
+        System.out.println('Javascript request>>> ' + request);
+        System.out.println('Javascript request params>>> ' + request["params"]);
+        return {"say": "Hi! " + request["params"]["name"]};
+    }
+
 }
 
 function instance() {
