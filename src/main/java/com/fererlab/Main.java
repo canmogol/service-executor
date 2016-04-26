@@ -86,7 +86,6 @@ public class Main {
         String filePath = "file://" + args[0] + args[1] + "." + args[2];
         String content = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
                 .stream()
-                .map(i -> i)
                 .collect(Collectors.joining("\n"));
 
         Main main = new Main();

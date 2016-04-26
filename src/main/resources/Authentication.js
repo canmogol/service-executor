@@ -23,7 +23,7 @@ function Authentication() {
     this.sayHi = function (request) {
         System.out.println('Javascript request>>> ' + request);
         System.out.println('Javascript request params>>> ' + request["params"]);
-        return {"say": "Hi! " + request["params"]["name"]};
+        return {"say": "Hi! " + request["params"]["name"] + " " + request["params"]["surname"]};
     }
 
 }
