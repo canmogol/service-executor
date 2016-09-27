@@ -1,23 +1,24 @@
-var System = Java.type('java.lang.System');
+function println(log) {
+    var System = Java.type('java.lang.System');
+    System.out.println(log);
+}
 
 function Authentication() {
+
     this.handle = function (event) {
-        System.out.println('Javascript Object ' + this);
-        System.out.println('Javascript Event ' + event);
-        System.out.println('Javascript o>>> ' + event.head.origin.name);
-        System.out.println('Javascript o>>> ' + event.head.origin.domain);
-        System.out.println('Javascript o>>> ' + event.head.origin.ip);
-        System.out.println('Javascript o>>> ' + event.head.origin.port);
-        System.out.println('Javascript o>>> ' + event.head.origin.memoryMappedFile);
-        System.out.println('Javascript o>>> ' + event.head.origin.startedAt);
-        System.out.println('Javascript o>>> ' + event.head.origin.name);
-        System.out.println('Javascript hi>>> ' + event.head.id);
-        System.out.println('Javascript ht>>> ' + event.head.type);
-        System.out.println('Javascript hc>>> ' + event.head.createdAt);
-        System.out.println('Javascript b>>> ' + event.body);
+        println('Javascript Object: ' + this);
+        println('Javascript Event: ' + event);
+        println('Javascript username: ' + event.body.username);
         var response = {logged: true, 'groups': ['admin', 'user']};
         return response;
     };
+
+    // http://localhost:9876/api/sayHi/?name=john&surname=wick
+    this.sayHi = function (request) {
+        println('Javascript request: ' + request);
+        return {"say": "Hi! " + request["params"]["name"] + " " + request["params"]["surname"]};
+    }
+
 }
 
 function instance() {

@@ -1,0 +1,40 @@
+{
+  "authType": null,
+  "body": {
+    "object1": {
+      "key1": "value1"
+    },
+    "key2": "value2",
+    "arr1": [
+      1,
+      2,
+      3
+    ]
+  },
+  "contextPath": "",
+  "cookies": [],
+  "headers": {
+    "Accept": "*/*",
+    "Accept-Encoding": "gzip, deflate",
+    "Accept-Language": "en-US,en;q=0.8",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "Content-Length": "82",
+    "Content-Type": "application/json",
+    "Host": "localhost:9876",
+    "Origin": "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
+    "Postman-Token": "7408bf45-66b1-a00b-bf4f-68b05a8e557e",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36"
+  },
+  "method": "POST",
+  "params": {
+    "name": "john",
+    "surname": "wick"
+  },
+  "pathInfo": "/api/sayHi/",
+  "pathTranslated": null,
+  "queryString": "name=john&surname=wick",
+  "remoteUser": null,
+  "requestedURI": "/api/sayHi/",
+  "requestedURL": "http://localhost:9876/api/sayHi/"
+}

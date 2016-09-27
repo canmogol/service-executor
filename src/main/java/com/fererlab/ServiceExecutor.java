@@ -27,7 +27,7 @@ public class ServiceExecutor {
     private Set<ServiceListener> serviceListeners = new HashSet<>();
     private Service service = null;
     private Configuration configuration = null;
-    private ServiceProxy serviceProxy;
+    private ServiceProxy serviceProxy = null;
 
     public ServiceExecutor(URI scriptURI, URI configURI) {
         this.scriptURI = scriptURI;
@@ -37,6 +37,7 @@ public class ServiceExecutor {
     public ServiceExecutor(URI scriptURI, URI configURI, Set<ServiceListener> serviceListeners) {
         this.scriptURI = scriptURI;
         this.configURI = configURI;
+        this.serviceListeners.addAll(serviceListeners);
     }
 
     public Configuration readConfiguration() {
@@ -67,7 +68,7 @@ public class ServiceExecutor {
         Maybe<String> content = contentLoader.load(scriptURI);
         if (content.isPresent()) {
             // create service executor
-            service = ServiceFactory.create(ServiceType.find(scriptURI.getPath()));
+            service = ServiceFactory.create(ServiceType.find(scriptURI.getPath()), scriptURI);
             serviceListeners.addAll(ServiceListenerFactory.defaultListeners(service));
             serviceListeners.forEach(ServiceListener::onCreate);
         } else {

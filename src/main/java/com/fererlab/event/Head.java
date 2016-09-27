@@ -7,10 +7,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Head {
 
-    private Origin origin;
     private String id;
     private String type;
     private Long createdAt;
+    private Origin origin = new Origin();
 
     public Origin getOrigin() {
         return origin;

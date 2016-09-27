@@ -1,4 +1,4 @@
-package com.fererlab.interpreter;
+package com.fererlab.language.python;
 
 
 import com.fererlab.log.FLogger;
@@ -23,7 +23,7 @@ public class PythonInter {
         pythonInterpreter = new PythonInterpreter();
         long creationTime = System.currentTimeMillis() - time;
         PerfCounter.add(PerfCounter.PYTHON_INTERPRETER_CREATED, creationTime);
-        log.info("python interpreter created: " + creationTime);
+        log.info("python interpreter created: " + creationTime + " milli seconds");
     }
 
     public static PythonInter getInstance() {

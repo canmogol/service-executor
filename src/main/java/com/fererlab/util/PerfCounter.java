@@ -13,6 +13,7 @@ public class PerfCounter {
     public static final String SERVER_START_TIME = "SERVER_START_TIME";
     public static final String SERVER_DEPLOY_TIME = "SERVER_DEPLOY_TIME";
     public static final String PYTHON_INTERPRETER_CREATED = "PYTHON_INTERPRETER_CREATED";
+    public static final String RUBY_INTERPRETER_CREATED = "RUBY_INTERPRETER_CREATED";
 
     private static final Map<String, List<Long>> performances = new HashMap<>();
 

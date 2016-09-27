@@ -4,11 +4,9 @@ import com.fererlab.commandline.CommandLineArguments;
 import com.fererlab.commandline.CommandLineParser;
 import com.fererlab.config.Configuration;
 import com.fererlab.filter.ReloadFilter;
-import com.fererlab.language.javascript.JavaScriptService;
 import com.fererlab.log.FLogger;
 import com.fererlab.restful.RestfulApplication;
 import com.fererlab.service.Reloader;
-import com.fererlab.service.ScriptingService;
 import com.fererlab.service.Service;
 import com.fererlab.util.Maybe;
 import com.fererlab.util.PerfCounter;
@@ -60,8 +58,10 @@ public class Main implements Runnable {
      */
     public static void main(String[] args) throws Exception {
         // example argument
+        args = new String[]{"../../src/main/resources/Authentication.js"};
+//        args = new String[]{"../../src/main/resources/Authentication.rb"};
 //        args = new String[]{"../../src/main/resources/Authentication.py"};
-        args = new String[]{"http://localhost/service/Authentication.py"};
+//        args = new String[]{"http://localhost/service/Authentication.py"};
 
         // create an object
         Main main = new Main(args);
@@ -132,7 +132,7 @@ public class Main implements Runnable {
                     };
                     ResteasyDeployment deployment = new ResteasyDeployment();
                     deployment.setApplication(restfulApplication);
-                    DeploymentInfo deploymentInfo = server.undertowDeployment(deployment, "/test");
+                    DeploymentInfo deploymentInfo = server.undertowDeployment(deployment, "/"); // HERE DEFINE THE PREFIX
                     deploymentInfo.setClassLoader(getClass().getClassLoader());
                     deploymentInfo.setContextPath("/");
                     deploymentInfo.setDeploymentName("");
@@ -212,8 +212,8 @@ public class Main implements Runnable {
             javascriptInterpreter.eval(content);
             Invocable invocable = (Invocable) javascriptInterpreter;
             Object instance = invocable.invokeFunction("instance");
-            service = new JavaScriptService();
-            ((ScriptingService) service).setInstance(instance);
+//            service = new JavaScriptService();
+//            ((ScriptingService) service).setInstance(instance);
 
         } catch (Exception e) {
             e.printStackTrace();

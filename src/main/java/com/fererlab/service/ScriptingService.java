@@ -1,7 +1,9 @@
 package com.fererlab.service;
 
+import com.fererlab.event.Request;
+
 public interface ScriptingService {
 
-    void setInstance(Object instance);
+    Object execute(String methodName, Request request);
 
 }

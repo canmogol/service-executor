@@ -9,16 +9,18 @@ import com.fererlab.language.python.PythonService;
 import com.fererlab.language.ruby.RubyService;
 import com.fererlab.language.scala.ScalaService;
 
+import java.net.URI;
+
 public class ServiceFactory {
 
-    public static Service create(ServiceType serviceType) {
+    public static Service create(ServiceType serviceType, URI scriptURI) {
         switch (serviceType) {
             case JAVASCRIPT:
-                return new JavaScriptService();
+                return new JavaScriptService(scriptURI);
             case PYTHON:
-                return new PythonService();
+                return new PythonService(scriptURI);
             case RUBY:
-                return new RubyService();
+                return new RubyService(scriptURI);
             case PHP:
                 return new PHPService();
             case CLOJURE:
