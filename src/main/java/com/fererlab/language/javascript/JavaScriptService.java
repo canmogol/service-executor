@@ -1,15 +1,19 @@
-package com.fererlab.service;
+package com.fererlab.language.javascript;
 
 import com.fererlab.event.Event;
+import com.fererlab.service.ScriptingService;
+import com.fererlab.service.Service;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-public class JavascriptService implements Service {
-    private final Object instance;
+public class JavaScriptService implements Service, ScriptingService {
 
-    public JavascriptService(Object instance) {
+    private Object instance;
+
+    @Override
+    public void setInstance(Object instance) {
         this.instance = instance;
     }
 
@@ -39,4 +43,5 @@ public class JavascriptService implements Service {
         }
         return map;
     }
+
 }

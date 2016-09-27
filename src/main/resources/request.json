@@ -1,0 +1,19 @@
+{
+  "head": {
+    "origin": {
+      "name": "Web",
+      "domain": "fererlab.com",
+      "ip": "10.0.1.4",
+      "port": "9877",
+      "memoryMappedFile": "/tmp/mmfile/fererlab.com/Web",
+      "startedAt": 1460198211234
+    },
+    "id": "410dfccc-d427-4e2b-9977-dcdd4c9dab4a",
+    "type": "Authenticate",
+    "createdAt": 1460198215367
+  },
+  "body": {
+    "username": "john",
+    "password": "wick"
+  }
+}

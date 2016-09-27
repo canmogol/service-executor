@@ -1,12 +1,23 @@
 package com.fererlab;
 
+import com.fererlab.commandline.CommandLineArguments;
+import com.fererlab.commandline.CommandLineParser;
+import com.fererlab.config.Configuration;
 import com.fererlab.filter.ReloadFilter;
+import com.fererlab.language.javascript.JavaScriptService;
+import com.fererlab.log.FLogger;
 import com.fererlab.restful.RestfulApplication;
-import com.fererlab.service.*;
+import com.fererlab.service.Reloader;
+import com.fererlab.service.ScriptingService;
+import com.fererlab.service.Service;
+import com.fererlab.util.Maybe;
+import com.fererlab.util.PerfCounter;
 import io.undertow.Undertow;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.FilterInfo;
+import io.undertow.servlet.api.InstanceFactory;
+import io.undertow.servlet.api.InstanceHandle;
 import org.jboss.resteasy.plugins.server.undertow.UndertowJaxrsServer;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.jruby.embed.ScriptingContainer;
@@ -17,41 +28,154 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.servlet.DispatcherType;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import javax.servlet.Filter;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-public class Main {
-
-    /**
-     * GamApp logger
-     */
-    private static Logger logger = Logger.getLogger(Main.class.getName());
+public class Main implements Runnable {
 
     /**
-     * Current Service instance
+     * Logger
      */
-    public static Service service;
+    private static final Logger log = FLogger.getLogger(Main.class.getName());
 
     /**
-     * undertow web server
+     * command line arguments
      */
-    private UndertowJaxrsServer server;
+    private final String[] args;
+
+
+    public Main(String[] args) {
+        this.args = args;
+    }
 
     /**
-     * undertow web server thread
+     * main method for command line executions
+     *
+     * @param args command line arguments
+     * @throws Exception
      */
-    private Thread webServerThread;
+    public static void main(String[] args) throws Exception {
+        // example argument
+//        args = new String[]{"../../src/main/resources/Authentication.py"};
+        args = new String[]{"http://localhost/service/Authentication.py"};
 
+        // create an object
+        Main main = new Main(args);
 
-    /**
-     * Service object reloader
-     */
-    public static Reloader reloader;
+        // call run method, may be called in a thread
+        main.run();
+
+    }
+
+    @Override
+    public void run() {
+        try {
+            // Parse command line parameters
+            CommandLineParser parser = new CommandLineParser();
+            CommandLineArguments arguments = parser.parse(args);
+
+            // Service Executor
+            ServiceExecutor serviceExecutor = new ServiceExecutor(arguments.getScriptURI(), arguments.getConfigURI());
+            Maybe<Service> mService = serviceExecutor.createService();
+            mService.notEmpty(service -> {
+                // run service in another Thread
+                Thread webServerThread = new Thread(() -> {
+                    // initial time
+                    long time = System.currentTimeMillis();
+
+                    // RELOADER
+                    Maybe<Reloader> mReloader = serviceExecutor.createReloader();
+                    long reloaderCreationTime = (System.currentTimeMillis() - time);
+                    log.info("reloader created: " + reloaderCreationTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.RELOADER_CREATION_TIME, reloaderCreationTime);
+
+                    // CONFIGURATION
+                    time = System.currentTimeMillis();
+                    Configuration configuration = serviceExecutor.readConfiguration();
+                    long configReadTime = (System.currentTimeMillis() - time);
+                    log.info("configuration read: " + configReadTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.CONFIGURATION_READ_TIME, configReadTime);
+
+                    // JAXRS SERVER
+                    log.info("starting web server");
+                    time = System.currentTimeMillis();
+                    UndertowJaxrsServer server = new UndertowJaxrsServer();
+                    long serverCreationTime = (System.currentTimeMillis() - time);
+                    log.info("server created: " + serverCreationTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.SERVER_CREATION_TIME, serverCreationTime);
+
+                    // SERVER START
+                    time = System.currentTimeMillis();
+                    Undertow.Builder serverBuilder = Undertow.builder().addHttpListener(
+                            configuration.getWebServerPort(),
+                            configuration.getWebServerHostname()
+                    );
+                    log.info("web server port: " + configuration.getWebServerPort() + " hostname: " + configuration.getWebServerHostname());
+                    server.start(serverBuilder);
+                    long serverStartTime = (System.currentTimeMillis() - time);
+                    log.info("server started: " + serverStartTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.SERVER_START_TIME, serverStartTime);
+
+                    // DEPLOY
+                    time = System.currentTimeMillis();
+                    RestfulApplication restfulApplication = new RestfulApplication() {
+                        @Override
+                        public Set<Object> getSingletons() {
+                            Set<Object> singletons = new HashSet<>();
+                            singletons.add(serviceExecutor.getServiceProxy());
+                            return singletons;
+                        }
+                    };
+                    ResteasyDeployment deployment = new ResteasyDeployment();
+                    deployment.setApplication(restfulApplication);
+                    DeploymentInfo deploymentInfo = server.undertowDeployment(deployment, "/test");
+                    deploymentInfo.setClassLoader(getClass().getClassLoader());
+                    deploymentInfo.setContextPath("/");
+                    deploymentInfo.setDeploymentName("");
+                    deploymentInfo.setDefaultEncoding("UTF-8");
+
+                    // FILTER
+                    FilterInfo filter = Servlets.filter("ReloadFilter", ReloadFilter.class, new InstanceFactory<Filter>() {
+                        @Override
+                        public InstanceHandle<Filter> createInstance() throws InstantiationException {
+                            return new InstanceHandle<Filter>() {
+                                @Override
+                                public Filter getInstance() {
+                                    return new ReloadFilter(mReloader.get());
+                                }
+
+                                @Override
+                                public void release() {
+                                    System.out.println("-----release");
+                                }
+                            };
+                        }
+                    });
+                    deploymentInfo.addFilter(filter);
+                    deploymentInfo.addFilterUrlMapping("ReloadFilter", "/*", DispatcherType.REQUEST);
+
+                    // DEPLOY SERVER
+                    server.deploy(deploymentInfo);
+                    long serverDeployTime = (System.currentTimeMillis() - time);
+                    log.info("server deployed: " + serverDeployTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.SERVER_DEPLOY_TIME, serverDeployTime);
+
+                });
+
+                // start web server Thread
+                webServerThread.start();
+
+            });
+        } catch (Exception exception) {
+            String error = "could not get the content of file, args: " + Arrays.toString(args) + " will quit now, exception: " + exception.getMessage();
+            log.log(Level.SEVERE, error, exception);
+        }
+    }
+
 
     /**
      * Python pythonInterpreter
@@ -68,94 +192,28 @@ public class Main {
      */
     private ScriptEngine javascriptInterpreter;
 
-    public static void main(String[] args) throws Exception {
-//        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "py"};
-//        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "rb"};
-        args = new String[]{"/mnt/sda1/IdeaProjects/canmogol/service-executor/src/main/resources/", "Authentication", "js"};
-        String filePath = "file://" + args[0] + args[1] + "." + args[2];
-        String content = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
-                .stream()
-                .map(i -> i)
-                .collect(Collectors.joining("\n"));
-
-        Main main = new Main();
-//        main.createPythonService(content, args[1], filePath);
-//        main.createRubyService(content, args[1], filePath);
-        main.createJavascriptService(content, args[1], filePath);
-        main.startServer();
-    }
-
-    private void startServer() {
-        if (webServerThread == null) {
-            logger.info("starting web server");
-            webServerThread = new Thread() {
-                @Override
-                public void run() {
-                    restartServer();
-                }
-            };
-            webServerThread.start();
-        } else {
-            logger.info("web server already started, using existing server");
-        }
-    }
-
-    private void restartServer() {
-        // create server
-        long time = System.currentTimeMillis();
-        server = new UndertowJaxrsServer();
-        logger.info("server created: " + (System.currentTimeMillis() - time) + " milli seconds");
-
-        time = System.currentTimeMillis();
-        Undertow.Builder serverBuilder = Undertow.builder().addHttpListener(9876, "localhost");
-        logger.info("server port: " + 9876);
-        server.start(serverBuilder);
-        logger.info("server started: " + (System.currentTimeMillis() - time) + " milli seconds");
-
-        // start server
-        time = System.currentTimeMillis();
-        RestfulApplication restfulApplication = new RestfulApplication() {
-            @Override
-            public Set<Class<?>> getClasses() {
-                Set<Class<?>> classes = new HashSet<>();
-                classes.add(ServiceProxy.class);
-                return classes;
-            }
-        };
-        ResteasyDeployment deployment = new ResteasyDeployment();
-        deployment.setApplication(restfulApplication);
-        DeploymentInfo deploymentInfo = server.undertowDeployment(deployment, "");
-        deploymentInfo.setClassLoader(getClass().getClassLoader());
-        deploymentInfo.setContextPath("/");
-        deploymentInfo.setDeploymentName("");
-        deploymentInfo.setDefaultEncoding("UTF-8");
-
-        FilterInfo filter = Servlets.filter("ReloadFilter", ReloadFilter.class);
-        deploymentInfo.addFilter(filter);
-        deploymentInfo.addFilterUrlMapping("ReloadFilter", "/*", DispatcherType.REQUEST);
-
-        // deploy server
-        server.deploy(deploymentInfo);
-        logger.info("server deployed: " + (System.currentTimeMillis() - time) + " milli seconds");
-    }
+    private Reloader reloader;
+    private Service service;
 
     private void createJavascriptService(String content, String requestServiceName, String filePath) {
         try {
             javascriptInterpreter = getJavascriptInterpreter();
-            reloader = () -> {
-                String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
-                        .stream()
-                        .map(i -> i)
-                        .collect(Collectors.joining("\n"));
-                javascriptInterpreter.eval(newContent);
-                Invocable invocable = (Invocable) javascriptInterpreter;
-                Object instance = invocable.invokeFunction("instance");
-                service = new JavascriptService(instance);
-            };
+//            reloader = () -> {
+//                String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
+//                        .stream()
+//                        .collect(Collectors.joining("\n"));
+//                javascriptInterpreter.eval(newContent);
+//                Invocable invocable = (Invocable) javascriptInterpreter;
+//                Object instance = invocable.invokeFunction("instance");
+//                service = new JavaScriptService();
+//                ((ScriptingService) service).setInstance(instance);
+//
+//            };
             javascriptInterpreter.eval(content);
             Invocable invocable = (Invocable) javascriptInterpreter;
             Object instance = invocable.invokeFunction("instance");
-            service = new JavascriptService(instance);
+            service = new JavaScriptService();
+            ((ScriptingService) service).setInstance(instance);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -164,30 +222,28 @@ public class Main {
 
     private void createRubyService(String content, String requestServiceName, String filePath) {
         rubyInterpreter = getRubyInterpreter();
-        reloader = () -> {
-            String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
-                    .stream()
-                    .map(i -> i)
-                    .collect(Collectors.joining("\n"));
-            Object rubyObject = rubyInterpreter.runScriptlet(newContent);
-            service = (Service) rubyObject;
-        };
+//        reloader = () -> {
+//            String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
+//                    .stream()
+//                    .collect(Collectors.joining("\n"));
+//            Object rubyObject = rubyInterpreter.runScriptlet(newContent);
+//            service = (Service) rubyObject;
+//        };
         Object rubyObject = rubyInterpreter.runScriptlet(content);
         service = (Service) rubyObject;
     }
 
     private void createPythonService(String content, String requestServiceName, String filePath) {
         pythonInterpreter = getPythonInterpreter();
-        reloader = () -> {
-            String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
-                    .stream()
-                    .map(i -> i)
-                    .collect(Collectors.joining("\n"));
-            pythonInterpreter.exec(newContent);
-            PyObject pyServiceObject = pythonInterpreter.get(requestServiceName);
-            PyObject serviceObject = pyServiceObject.__call__();
-            service = (Service) serviceObject.__tojava__(Service.class);
-        };
+//        reloader = () -> {
+//            String newContent = Files.readAllLines(Paths.get(new URL(filePath).toURI()))
+//                    .stream()
+//                    .collect(Collectors.joining("\n"));
+//            pythonInterpreter.exec(newContent);
+//            PyObject pyServiceObject = pythonInterpreter.get(requestServiceName);
+//            PyObject serviceObject = pyServiceObject.__call__();
+//            service = (Service) serviceObject.__tojava__(Service.class);
+//        };
         pythonInterpreter.exec(content);
         PyObject pyServiceObject = pythonInterpreter.get(requestServiceName);
         PyObject serviceObject = pyServiceObject.__call__();
@@ -214,6 +270,7 @@ public class Main {
         }
         return javascriptInterpreter;
     }
+
 
 
 /*

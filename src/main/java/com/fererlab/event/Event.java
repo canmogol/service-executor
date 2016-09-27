@@ -1,5 +1,7 @@
 package com.fererlab.event;
 
+import com.owlike.genson.Genson;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Map;
 
@@ -25,4 +27,8 @@ public class Event {
         this.body = body;
     }
 
+    @Override
+    public String toString() {
+        return new Genson().serialize(this);
+    }
 }

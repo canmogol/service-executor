@@ -1,5 +1,7 @@
 package com.fererlab.event;
 
+import com.owlike.genson.Genson;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
@@ -42,4 +44,8 @@ public class Head {
         this.createdAt = createdAt;
     }
 
+    @Override
+    public String toString() {
+        return new Genson().serialize(this);
+    }
 }

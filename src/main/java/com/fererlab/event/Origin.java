@@ -1,5 +1,7 @@
 package com.fererlab.event;
 
+import com.owlike.genson.Genson;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
@@ -10,7 +12,7 @@ public class Origin {
     private String ip;
     private Integer port;
     private String memoryMappedFile;
-    private String startedAt;
+    private Long startedAt;
 
     public String getName() {
         return name;
@@ -52,11 +54,16 @@ public class Origin {
         this.memoryMappedFile = memoryMappedFile;
     }
 
-    public String getStartedAt() {
+    public Long getStartedAt() {
         return startedAt;
     }
 
-    public void setStartedAt(String startedAt) {
+    public void setStartedAt(Long startedAt) {
         this.startedAt = startedAt;
+    }
+
+    @Override
+    public String toString() {
+        return new Genson().serialize(this);
     }
 }
