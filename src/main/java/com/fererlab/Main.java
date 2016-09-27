@@ -58,10 +58,15 @@ public class Main implements Runnable {
      */
     public static void main(String[] args) throws Exception {
         // example argument
+//        args = new String[]{"classpath://io.application.sample.Authentication"};
+//        args = new String[]{"../../src/main/java/io/application/sample/Authentication.java"};
+//        args = new String[]{"../../src/main/resources/Authentication.java"};
+//        args = new String[]{"../../src/main/resources/AuthenticationG.groovy"};
         args = new String[]{"../../src/main/resources/Authentication.js"};
 //        args = new String[]{"../../src/main/resources/Authentication.rb"};
 //        args = new String[]{"../../src/main/resources/Authentication.py"};
 //        args = new String[]{"http://localhost/service/Authentication.py"};
+//        args = new String[]{"jdbc:postgresql://localhost:5432/serviceexecutor?username=postgres&password=123456&table=services&programming_language=python&service_name=Authentication&content=file_content"};
 
         // create an object
         Main main = new Main(args);
@@ -79,26 +84,19 @@ public class Main implements Runnable {
             CommandLineArguments arguments = parser.parse(args);
 
             // Service Executor
-            ServiceExecutor serviceExecutor = new ServiceExecutor(arguments.getScriptURI(), arguments.getConfigURI());
+            ServiceExecutor serviceExecutor = new ServiceExecutor();
+            serviceExecutor.setConfigURI(arguments.getConfigURI());
+            serviceExecutor.setScriptURI(arguments.getScriptURI());
+
+            // CREATE SERVICE
             Maybe<Service> mService = serviceExecutor.createService();
             mService.notEmpty(service -> {
+
                 // run service in another Thread
                 Thread webServerThread = new Thread(() -> {
+
                     // initial time
                     long time = System.currentTimeMillis();
-
-                    // RELOADER
-                    Maybe<Reloader> mReloader = serviceExecutor.createReloader();
-                    long reloaderCreationTime = (System.currentTimeMillis() - time);
-                    log.info("reloader created: " + reloaderCreationTime + " milli seconds");
-                    PerfCounter.add(PerfCounter.RELOADER_CREATION_TIME, reloaderCreationTime);
-
-                    // CONFIGURATION
-                    time = System.currentTimeMillis();
-                    Configuration configuration = serviceExecutor.readConfiguration();
-                    long configReadTime = (System.currentTimeMillis() - time);
-                    log.info("configuration read: " + configReadTime + " milli seconds");
-                    PerfCounter.add(PerfCounter.CONFIGURATION_READ_TIME, configReadTime);
 
                     // JAXRS SERVER
                     log.info("starting web server");
@@ -107,6 +105,13 @@ public class Main implements Runnable {
                     long serverCreationTime = (System.currentTimeMillis() - time);
                     log.info("server created: " + serverCreationTime + " milli seconds");
                     PerfCounter.add(PerfCounter.SERVER_CREATION_TIME, serverCreationTime);
+
+                    // CONFIGURATION
+                    time = System.currentTimeMillis();
+                    Configuration configuration = serviceExecutor.readConfiguration();
+                    long configReadTime = (System.currentTimeMillis() - time);
+                    log.info("configuration read: " + configReadTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.CONFIGURATION_READ_TIME, configReadTime);
 
                     // SERVER START
                     time = System.currentTimeMillis();
@@ -138,25 +143,35 @@ public class Main implements Runnable {
                     deploymentInfo.setDeploymentName("");
                     deploymentInfo.setDefaultEncoding("UTF-8");
 
-                    // FILTER
-                    FilterInfo filter = Servlets.filter("ReloadFilter", ReloadFilter.class, new InstanceFactory<Filter>() {
-                        @Override
-                        public InstanceHandle<Filter> createInstance() throws InstantiationException {
-                            return new InstanceHandle<Filter>() {
-                                @Override
-                                public Filter getInstance() {
-                                    return new ReloadFilter(mReloader.get());
-                                }
+                    // RELOADER
+                    Maybe<Reloader> mReloader = serviceExecutor.createReloader();
+                    long reloaderCreationTime = (System.currentTimeMillis() - time);
+                    log.info("reloader created: " + reloaderCreationTime + " milli seconds");
+                    PerfCounter.add(PerfCounter.RELOADER_CREATION_TIME, reloaderCreationTime);
 
-                                @Override
-                                public void release() {
-                                    System.out.println("-----release");
-                                }
-                            };
-                        }
-                    });
-                    deploymentInfo.addFilter(filter);
-                    deploymentInfo.addFilterUrlMapping("ReloadFilter", "/*", DispatcherType.REQUEST);
+                    // ADD FILTER IF EXISTS AND RELOAD EVERY REQUEST IS TRUE
+                    if (mReloader.isPresent() && configuration.isReloadEveryRequest()) {
+                        FilterInfo filter = Servlets.filter("ReloadFilter", ReloadFilter.class, new InstanceFactory<Filter>() {
+                            @Override
+                            public InstanceHandle<Filter> createInstance() throws InstantiationException {
+                                return new InstanceHandle<Filter>() {
+                                    private ReloadFilter reloadFilter;
+
+                                    @Override
+                                    public Filter getInstance() {
+                                        return new ReloadFilter(mReloader.get());
+                                    }
+
+                                    @Override
+                                    public void release() {
+                                        System.out.println("released reloadFilter: " + reloadFilter);
+                                    }
+                                };
+                            }
+                        });
+                        deploymentInfo.addFilter(filter);
+                        deploymentInfo.addFilterUrlMapping("ReloadFilter", "/*", DispatcherType.REQUEST);
+                    }
 
                     // DEPLOY SERVER
                     server.deploy(deploymentInfo);

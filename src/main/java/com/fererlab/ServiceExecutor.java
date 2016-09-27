@@ -21,13 +21,17 @@ public class ServiceExecutor {
 
     private static final Logger log = FLogger.getLogger(ServiceExecutor.class.getSimpleName());
 
-    private final URI scriptURI;
-    private final URI configURI;
+    private URI scriptURI;
+    private URI configURI;
 
     private Set<ServiceListener> serviceListeners = new HashSet<>();
     private Service service = null;
     private Configuration configuration = null;
     private ServiceProxy serviceProxy = null;
+
+    public ServiceExecutor() {
+
+    }
 
     public ServiceExecutor(URI scriptURI, URI configURI) {
         this.scriptURI = scriptURI;
@@ -37,6 +41,18 @@ public class ServiceExecutor {
     public ServiceExecutor(URI scriptURI, URI configURI, Set<ServiceListener> serviceListeners) {
         this.scriptURI = scriptURI;
         this.configURI = configURI;
+        this.serviceListeners.addAll(serviceListeners);
+    }
+
+    public void setScriptURI(URI scriptURI) {
+        this.scriptURI = scriptURI;
+    }
+
+    public void setConfigURI(URI configURI) {
+        this.configURI = configURI;
+    }
+
+    public void setServiceListeners(Set<ServiceListener> serviceListeners) {
         this.serviceListeners.addAll(serviceListeners);
     }
 

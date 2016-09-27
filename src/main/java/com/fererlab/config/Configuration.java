@@ -7,6 +7,7 @@ public class Configuration {
 
     private String webServerHostname;
     private int webServerPort;
+    private boolean reloadEveryRequest;
 
     public String getWebServerHostname() {
         return webServerHostname;
@@ -24,10 +25,19 @@ public class Configuration {
         this.webServerPort = webServerPort;
     }
 
+    public boolean isReloadEveryRequest() {
+        return reloadEveryRequest;
+    }
+
+    public void setReloadEveryRequest(boolean reloadEveryRequest) {
+        this.reloadEveryRequest = reloadEveryRequest;
+    }
+
     public static Configuration createDefault() {
         Configuration configuration = new Configuration();
         configuration.setWebServerPort(9876);
         configuration.setWebServerHostname("localhost");
+        configuration.setReloadEveryRequest(true);
         return configuration;
     }
 }

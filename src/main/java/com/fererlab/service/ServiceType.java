@@ -1,7 +1,7 @@
 package com.fererlab.service;
 
 public enum ServiceType {
-    JAVASCRIPT, PYTHON, RUBY, PHP, CLOJURE, GROOVY, SCALA, CLASS;
+    JAVASCRIPT, PYTHON, RUBY, PHP, CLOJURE, GROOVY, JAVA, SCALA, CLASS;
 
     public static ServiceType find(String path) {
         if (path.lastIndexOf(".") != -1) {

@@ -15,6 +15,8 @@ function Authentication() {
 
     // http://localhost:9876/api/sayHi/?name=john&surname=wick
     this.sayHi = function (request) {
+        var Objects = Java.type('java.util.Objects');
+        println('Javascript Object: ' + Objects.hashCode(this));
         println('Javascript request: ' + request);
         return {"say": "Hi! " + request["params"]["name"] + " " + request["params"]["surname"]};
     }

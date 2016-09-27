@@ -11,6 +11,8 @@ public class ContentLoaderFactory {
                 return new HttpContentLoader();
             case "https":
                 return new HttpsContentLoader();
+            case "classpath":
+                return new ClassPathContentLoader();
             default:
                 return new FileContentLoader();
         }
