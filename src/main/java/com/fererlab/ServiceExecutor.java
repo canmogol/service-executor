@@ -84,7 +84,7 @@ public class ServiceExecutor {
         Maybe<String> content = contentLoader.load(scriptURI);
         if (content.isPresent()) {
             // create service executor
-            service = ServiceFactory.create(ServiceType.find(scriptURI.getPath()), scriptURI);
+            service = ServiceFactory.create(ServiceType.find(scriptURI), scriptURI);
             serviceListeners.addAll(ServiceListenerFactory.defaultListeners(service));
             serviceListeners.forEach(ServiceListener::onCreate);
         } else {
@@ -94,8 +94,19 @@ public class ServiceExecutor {
     }
 
     public Maybe<Reloader> createReloader() {
-        if (scriptURI.getPath().lastIndexOf(".") != -1) {
-            String extension = scriptURI.getPath().substring(scriptURI.getPath().lastIndexOf(".") + 1);
+        String extension = null;
+        if (scriptURI.getPath() != null) {
+            extension = scriptURI.getPath().substring(scriptURI.getPath().lastIndexOf(".") + 1);
+        } else if ("jdbc".equalsIgnoreCase(scriptURI.getScheme())) {
+            try {
+                extension = scriptURI.getSchemeSpecificPart().substring(scriptURI.getSchemeSpecificPart().lastIndexOf("programming_language")).split("=")[1].split("\\&")[0];
+            } catch (Exception e) {
+                String error = "got exception while getting the service type, exception: " + e;
+                log.log(Level.SEVERE, error, e);
+            }
+        }
+
+        if (extension != null) {
             Reloader reloader = ReloaderFactory.createReloader(scriptURI, extension);
             if (reloader != null) {
                 reloader.addServiceReloadListener(getServiceProxy());

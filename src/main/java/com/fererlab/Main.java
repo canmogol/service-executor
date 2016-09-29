@@ -57,8 +57,37 @@ public class Main implements Runnable {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
-        // example argument
-        args = new String[]{"classpath://io.application.sample.ejb.EJBExample"};
+        /*
+        Testing request address:
+        http://localhost:9876/api/handle/
+
+        Headers:
+        Content-Type: application/json
+
+        Request Body:
+        {
+          "head": {
+            "origin": {
+              "name": "Web",
+              "domain": "fererlab.com",
+              "ip": "10.0.1.4",
+              "port": "9877",
+              "memoryMappedFile": "/tmp/mmfile/fererlab.com/Web",
+              "startedAt": 1460198211234
+            },
+            "id": "410dfccc-d427-4e2b-9977-dcdd4c9dab4a",
+            "type": "Authenticate",
+            "createdAt": 1460198215367
+          },
+          "body": {
+            "username": "john",
+            "password": "wick"
+          }
+        }
+         */
+
+        // example arguments
+//        args = new String[]{"classpath://io.application.sample.ejb.EJBExample"};
 //        args = new String[]{"classpath://io.application.sample.spring.SpringExample"};
 //        args = new String[]{"classpath://io.application.sample.simple.Authentication"};
 //        args = new String[]{"../../src/main/java/io/application/sample/simple/Authentication.java"};
@@ -68,7 +97,7 @@ public class Main implements Runnable {
 //        args = new String[]{"../../src/main/resources/Authentication.rb"};
 //        args = new String[]{"../../src/main/resources/Authentication.py"};
 //        args = new String[]{"http://localhost/service/Authentication.py"};
-//        args = new String[]{"jdbc:postgresql://localhost:5432/serviceexecutor?username=postgres&password=123456&table=services&programming_language=python&service_name=Authentication&content=file_content"};
+        args = new String[]{"jdbc:postgresql://localhost:5432/serviceexecutor?username=postgres&password=123456&table=services&programming_language=groovy&service_name=Authentication&content=file_content"};
 
         // create an object
         Main main = new Main(args);
@@ -188,7 +217,7 @@ public class Main implements Runnable {
 
             });
         } catch (Exception exception) {
-            String error = "could not get the content of file, args: " + Arrays.toString(args) + " will quit now, exception: " + exception.getMessage();
+            String error = "could not get the content of file, args: " + Arrays.toString(args) + " will quit now, exception: " + exception;
             log.log(Level.SEVERE, error, exception);
         }
     }

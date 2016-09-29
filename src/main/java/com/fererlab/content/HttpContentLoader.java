@@ -15,7 +15,7 @@ public class HttpContentLoader implements ContentLoader {
         try {
             URL url = uri.toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            if (connection.getResponseCode() == 200) {
+            if (connection.getResponseCode() > 199 && connection.getResponseCode() < 300) {
                 InputStream is = connection.getInputStream();
                 StringBuilder builder = new StringBuilder();
                 int i;

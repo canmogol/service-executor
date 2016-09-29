@@ -11,17 +11,21 @@ import java.net.URI;
 public class ReloaderFactory {
     public static Reloader createReloader(URI scriptURI, String fileExtension) {
         switch (fileExtension) {
+            case "python":
             case "py":
                 return new PythonReloader(scriptURI);
+            case "ruby":
             case "rb":
                 return new RubyReloader(scriptURI);
+            case "javascript":
             case "js":
                 return new JavascriptReloader(scriptURI);
             case "java":
-            case "groovy":
-                return new GroovyReloader(scriptURI);
+            case "clojure":
             case "cj":
             case "scala":
+            case "groovy":
+                return new GroovyReloader(scriptURI);
             default:
                 return null;
         }

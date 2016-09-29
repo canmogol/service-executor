@@ -14,6 +14,7 @@ import org.python.core.PyProxy;
 import org.python.util.PythonInterpreter;
 
 import java.net.URI;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PythonService implements Service, ScriptingService {
@@ -43,13 +44,23 @@ public class PythonService implements Service, ScriptingService {
     private Service getService() {
         if (service == null) {
             String serviceName = null;
-            String path = scriptURI.getPath();
-            if (path.lastIndexOf("/") != -1) {
-                String fileName = path.substring(path.lastIndexOf("/") + 1);
-                if (fileName.lastIndexOf(".") != -1) {
-                    serviceName = fileName.substring(0, fileName.lastIndexOf("."));
+            if (scriptURI.getPath() != null) {
+                String path = scriptURI.getPath();
+                if (path.lastIndexOf("/") != -1) {
+                    String fileName = path.substring(path.lastIndexOf("/") + 1);
+                    if (fileName.lastIndexOf(".") != -1) {
+                        serviceName = fileName.substring(0, fileName.lastIndexOf("."));
+                    }
+                }
+            } else if ("jdbc".equalsIgnoreCase(scriptURI.getScheme())) {
+                try {
+                    serviceName = scriptURI.getSchemeSpecificPart().substring(scriptURI.getSchemeSpecificPart().lastIndexOf("service_name")).split("=")[1].split("\\&")[0];
+                } catch (Exception e) {
+                    String error = "got exception while getting the service type, exception: " + e;
+                    log.log(Level.SEVERE, error, e);
                 }
             }
+
             ContentLoader contentLoader = ContentLoaderFactory.createLoader(scriptURI.getScheme());
             Maybe<String> content = contentLoader.load(scriptURI);
             if (content.isPresent()) {

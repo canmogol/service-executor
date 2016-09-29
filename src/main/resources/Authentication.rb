@@ -15,4 +15,4 @@ class Authentication
   end
 
 end
-AuthenticationG.new
+Authentication.new
