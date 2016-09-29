@@ -59,10 +59,10 @@ public class Main implements Runnable {
     public static void main(String[] args) throws Exception {
         // example argument
 //        args = new String[]{"classpath://io.application.sample.Authentication"};
-//        args = new String[]{"../../src/main/java/io/application/sample/Authentication.java"};
+        args = new String[]{"../../src/main/java/io/application/sample/Authentication.java"};
 //        args = new String[]{"../../src/main/resources/Authentication.java"};
 //        args = new String[]{"../../src/main/resources/AuthenticationG.groovy"};
-        args = new String[]{"../../src/main/resources/Authentication.js"};
+//        args = new String[]{"../../src/main/resources/Authentication.js"};
 //        args = new String[]{"../../src/main/resources/Authentication.rb"};
 //        args = new String[]{"../../src/main/resources/Authentication.py"};
 //        args = new String[]{"http://localhost/service/Authentication.py"};
