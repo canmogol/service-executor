@@ -87,7 +87,7 @@ public class Main implements Runnable {
          */
 
         // example arguments
-//        args = new String[]{"classpath://io.application.sample.ejb.EJBExample"};
+        args = new String[]{"classpath://io.application.sample.ejb.EJBExample"};
 //        args = new String[]{"classpath://io.application.sample.spring.SpringExample"};
 //        args = new String[]{"classpath://io.application.sample.simple.Authentication"};
 //        args = new String[]{"../../src/main/java/io/application/sample/simple/Authentication.java"};
@@ -97,7 +97,7 @@ public class Main implements Runnable {
 //        args = new String[]{"../../src/main/resources/Authentication.rb"};
 //        args = new String[]{"../../src/main/resources/Authentication.py"};
 //        args = new String[]{"http://localhost/service/Authentication.py"};
-        args = new String[]{"jdbc:postgresql://localhost:5432/serviceexecutor?username=postgres&password=123456&table=services&programming_language=groovy&service_name=Authentication&content=file_content"};
+//        args = new String[]{"jdbc:postgresql://localhost:5432/serviceexecutor?username=postgres&password=123456&table=services&programming_language=groovy&service_name=Authentication&content=file_content"};
 
         // create an object
         Main main = new Main(args);

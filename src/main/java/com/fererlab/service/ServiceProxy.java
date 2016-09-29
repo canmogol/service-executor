@@ -18,7 +18,9 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
+@Path("/api")
+@Produces({"application/json"})
+@Consumes({"*/*"})
 public class ServiceProxy implements Service, ServiceReloadListener {
 
     private static final Logger log = FLogger.getLogger(ServiceProxy.class.getSimpleName());
@@ -34,7 +36,13 @@ public class ServiceProxy implements Service, ServiceReloadListener {
         this.service = service;
     }
 
-
+    @GET
+    @POST
+    @PUT
+    @DELETE
+    @HEAD
+    @OPTIONS
+    @Path("/handle/")
     public Object handle(Event event) {
         try {
             return service.handle(event);
