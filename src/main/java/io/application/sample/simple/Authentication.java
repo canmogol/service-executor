@@ -1,4 +1,4 @@
-package io.application.sample;
+package io.application.sample.simple;
 
 import com.fererlab.event.Event;
 import com.fererlab.event.Request;
