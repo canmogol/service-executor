@@ -17,7 +17,7 @@ Header:
 
 Body:
 
-```
+```json
 {
     "head":{
         "id":"d95749da-dd6c-45dd-965c-9aa07ca6cf76",
@@ -41,7 +41,7 @@ Body:
 ```
 
 Expected Result:
-```
+```json
 {
   "status": "OK"
 }
@@ -60,7 +60,7 @@ Header:
 No - Body:
 
 Expected Result:
-```
+```json
 {
   "say": "Hi! john wick"
 }
@@ -79,7 +79,7 @@ No - Header
 
 Body:
 
-```
+```json
 {
     "head":{
         "id":"d95749da-dd6c-45dd-965c-9aa07ca6cf76",
@@ -103,7 +103,7 @@ Body:
 ```
 
 Expected Result:
-```
+```json
 {
   "status": "OK"
 }
